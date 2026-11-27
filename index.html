@@ -418,24 +418,35 @@ html.xmas header{padding-top:46px}
   cv.setAttribute("aria-hidden","true");
   cv.style.cssText="position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:9";
   document.body.appendChild(cv);
-  var ctx=cv.getContext("2d"),W,H,flakes=[],fill=dark?"rgba(255,255,255,.92)":"rgba(176,198,226,.95)";
+  var ctx=cv.getContext("2d"),W,H,flakes=[],col=dark?"rgba(255,255,255,.92)":"rgba(110,142,184,.9)";
   function size(){
     var r=Math.min(window.devicePixelRatio||1,2);W=window.innerWidth;H=window.innerHeight;
     cv.width=W*r;cv.height=H*r;ctx.setTransform(r,0,0,r,0,0);
-    var n=Math.min(90,Math.round(W*H/7000));
+    var n=Math.min(70,Math.round(W*H/9000));
     while(flakes.length<n)flakes.push(mk(true));
     flakes.length=n;
   }
   function mk(any){
-    var r=1.5+Math.random()*2.8;
-    return{x:Math.random()*W,y:any?Math.random()*H:-6,r:r,vy:.35+r*.2,a:6+Math.random()*16,ph:Math.random()*6.28,bx:0};
+    var r=3.5+Math.random()*5.5;
+    return{x:Math.random()*W,y:any?Math.random()*H:-12,r:r,vy:.3+r*.09,a:6+Math.random()*16,ph:Math.random()*6.28,rot:Math.random()*6.28,sp:(Math.random()-.5)*.02};
+  }
+  function flake(x,y,r,rot){
+    ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.lineWidth=1+r*.07;
+    ctx.beginPath();
+    for(var i=0;i<6;i++){
+      ctx.moveTo(0,0);ctx.lineTo(0,-r);
+      ctx.moveTo(0,-r*.55);ctx.lineTo(r*.3,-r*.82);
+      ctx.moveTo(0,-r*.55);ctx.lineTo(-r*.3,-r*.82);
+      ctx.rotate(1.0472);
+    }
+    ctx.stroke();ctx.restore();
   }
   function tick(){
-    ctx.clearRect(0,0,W,H);ctx.fillStyle=fill;
+    ctx.clearRect(0,0,W,H);ctx.strokeStyle=col;ctx.lineCap="round";
     for(var i=0;i<flakes.length;i++){
-      var f=flakes[i];f.y+=f.vy;f.ph+=.012;
-      if(f.y>H+6){flakes[i]=f=mk(false)}
-      ctx.beginPath();ctx.arc(f.x+Math.sin(f.ph)*f.a,f.y,f.r,0,6.2832);ctx.fill();
+      var f=flakes[i];f.y+=f.vy;f.ph+=.012;f.rot+=f.sp;
+      if(f.y>H+12){flakes[i]=f=mk(false)}
+      flake(f.x+Math.sin(f.ph)*f.a,f.y,f.r,f.rot);
     }
     requestAnimationFrame(tick);
   }
