@@ -373,5 +373,74 @@ $("list").addEventListener("click",function(e){
   document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!lb.hidden)closeLB()});
 })();
 </script>
+<style>
+html.xmas header{padding-top:46px}
+#lights{position:absolute;top:env(safe-area-inset-top,0px);left:0;right:0;height:56px;pointer-events:none;z-index:7;overflow:hidden}
+#lights svg{display:block}
+.bulb path{fill:currentColor;filter:drop-shadow(0 0 5px currentColor);animation:tw 1.8s ease-in-out infinite alternate}
+.bulb.b1 path{animation-delay:.6s}.bulb.b2 path{animation-delay:1.2s}
+.still .bulb path{animation:none}
+@keyframes tw{from{opacity:.4}to{opacity:1}}
+</style>
+<script>
+/* Christmas effects: snow + string lights, on automatically 1 Dec to 2 Jan. Add ?xmas=1 to the link to preview, ?xmas=0 to hide. */
+(function(){
+  var now=new Date(),m=now.getMonth(),d=now.getDate(),q=location.search;
+  var on=(m===11)||(m===0&&d<=2);
+  if(/[?&]xmas=1/.test(q))on=true;
+  if(/[?&]xmas=0/.test(q))on=false;
+  if(!on)return;
+  document.documentElement.classList.add("xmas");
+  var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var dark=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches;
+
+  /* string lights across the top (they scroll away with the page) */
+  var L=document.createElement("div");L.id="lights";L.setAttribute("aria-hidden","true");if(reduce)L.className="still";
+  document.body.appendChild(L);
+  function lights(){
+    var W=document.documentElement.clientWidth,seg=84,n=Math.ceil(W/seg)+1,cols=["#e23b3b","#f3c94a","#4fb04a","#ffe9b0"],path="M0,4",b="",k=0;
+    for(var i=0;i<n;i++){
+      var x0=i*seg,cx=x0+seg/2,x1=x0+seg;
+      path+=" Q"+cx+",30 "+x1+",4";
+      [0.28,0.72].forEach(function(t){
+        var u=1-t,x=u*u*x0+2*u*t*cx+t*t*x1,y=u*u*4+2*u*t*30+t*t*4;
+        b+='<g class="bulb b'+(k%3)+'" style="color:'+cols[k%4]+'" transform="translate('+x.toFixed(1)+' '+y.toFixed(1)+')"><rect x="-3" y="-1" width="6" height="6" rx="1" fill="#6b5a3a"/><path d="M0,4 C-8,6 -8,20 0,22 C8,20 8,6 0,4Z"/></g>';
+        k++;
+      });
+    }
+    L.innerHTML='<svg width="'+W+'" height="56" viewBox="0 0 '+W+' 56"><path d="'+path+'" fill="none" stroke="#7a6a48" stroke-width="2"/>'+b+'</svg>';
+  }
+  lights();window.addEventListener("resize",lights);
+  if(reduce)return;
+
+  /* falling snow: a see-through layer that never blocks taps */
+  var cv=document.createElement("canvas");
+  cv.setAttribute("aria-hidden","true");
+  cv.style.cssText="position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:9";
+  document.body.appendChild(cv);
+  var ctx=cv.getContext("2d"),W,H,flakes=[],fill=dark?"rgba(255,255,255,.92)":"rgba(176,198,226,.95)";
+  function size(){
+    var r=Math.min(window.devicePixelRatio||1,2);W=window.innerWidth;H=window.innerHeight;
+    cv.width=W*r;cv.height=H*r;ctx.setTransform(r,0,0,r,0,0);
+    var n=Math.min(90,Math.round(W*H/7000));
+    while(flakes.length<n)flakes.push(mk(true));
+    flakes.length=n;
+  }
+  function mk(any){
+    var r=1.5+Math.random()*2.8;
+    return{x:Math.random()*W,y:any?Math.random()*H:-6,r:r,vy:.35+r*.2,a:6+Math.random()*16,ph:Math.random()*6.28,bx:0};
+  }
+  function tick(){
+    ctx.clearRect(0,0,W,H);ctx.fillStyle=fill;
+    for(var i=0;i<flakes.length;i++){
+      var f=flakes[i];f.y+=f.vy;f.ph+=.012;
+      if(f.y>H+6){flakes[i]=f=mk(false)}
+      ctx.beginPath();ctx.arc(f.x+Math.sin(f.ph)*f.a,f.y,f.r,0,6.2832);ctx.fill();
+    }
+    requestAnimationFrame(tick);
+  }
+  size();window.addEventListener("resize",size);tick();
+})();
+</script>
 </body>
 </html>
